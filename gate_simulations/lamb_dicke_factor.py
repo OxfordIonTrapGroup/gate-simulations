@@ -118,8 +118,8 @@ class Lamb_Dicke_Factor():
             b2z = np.sqrt(1-b1z**2)
         elif (mode_name is 'rad_oop_l') or (mode_name is 'rad_oop_u'):
             a = np.sqrt(self.epsilon**4*(mu**2-1)**2-2*self.epsilon**2*(mu-1)**2*mu*(1+mu)+mu**2*(1+(mu-1)*mu))
-            b1z = -(mu-mu**2+self.epsilon**2*(mu**2-1)+a)/(2*a)
-            b2z = np.sqrt(1-b1z**2)
+            b2z = -(mu-mu**2+self.epsilon**2*(mu**2-1)+a)/(2*a)
+            b1z = np.sqrt(1-b2z**2)
         else:
             print('Error: mode not implemented')
             b1z = 0
