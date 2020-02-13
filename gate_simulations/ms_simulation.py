@@ -12,7 +12,7 @@ from gate_simulations.tqg_simulation import Tqg_simulation
 
 class Ms_simulation(Tqg_simulation):
 
-    def __init__(self,**kwargs):  
+    def __init__(self,scramble_phases=True,**kwargs):  
         ''' nHO: dimension of HO space which is simulated
         nbar_mode: mean thermal population of motional mode
         delta_g: gate detuning
@@ -41,9 +41,13 @@ class Ms_simulation(Tqg_simulation):
         
         super().__init__(**kwargs)
         
-        self.mw_offset_phase_1 = random.random()*2*pi # use this phase offset for mw pulses because they don't have a fixed phase relationship to gate lasers
-        self.phi_sum_1 = random.random()*2*pi
-        self.phi_diff_1 = random.random()*2*pi
+        if scramble_phases:
+            self.mw_offset_phase_1 = random.random()*2*pi # use this phase offset for mw pulses because they don't have a fixed phase relationship to gate lasers
+            self.phi_sum_1 = random.random()*2*pi
+        else:
+            self.mw_offset_phase_1 = 0
+            self.phi_sum_1 = 0
+        self.phi_diff_1 = 0
         
         self.set_ion_parameters()
         
@@ -213,6 +217,22 @@ class Ms_simulation(Tqg_simulation):
             self.ampl_asym_2 = ampl_asym
         else:
             self.ampl_asym_2 = ampl_asym_2
+            
+    def scan_ampl_asym(self,ampl_asym_max=-0.1,ampl_asym_min=0.1,n_steps=10,**kwargs):
+        # simulate gate fidelity for amplitude asymmetries
+        # initialize result vectors
+        self.set_custom_parameters(**kwargs)
+        
+        errors = []
+        rho_target = 1/2*(self.uu_uu+self.dd_dd-1j*self.ud_ud+1j*self.du_du)
+        ampl_asyms = np.linspace(ampl_asym_min, ampl_asym_max, n_steps)
+
+        for ampl_asym in ampl_asyms:
+            self.set_ampl_asym(ampl_asym)
+            times, final_rhos = self.do_gate()
+            errors.append(1-fidelity(rho_target,ptrace(final_rhos[-1],[0,1]))**2)
+            
+        return ampl_asyms, errors
         
         
     def calc_ideal_Rabi_freq(self,verbose=True):
