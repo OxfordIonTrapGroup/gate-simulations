@@ -12,7 +12,8 @@ from gate_simulations.tqg_simulation import Tqg_simulation
 
 class Ms_simulation(Tqg_simulation):
 
-    def __init__(self,scramble_phases=True,do_center_pi=False,do_Walsh=False,second_loop_phase_error=0,**kwargs):  
+    def __init__(self,scramble_phases=True,do_center_pi=False,do_Walsh=False,
+                 second_loop_phase_error=0,phi_comp_scnd_sb=0,**kwargs):  
         ''' nHO: dimension of HO space which is simulated
         nbar_mode: mean thermal population of motional mode
         delta_g: gate detuning
@@ -43,7 +44,8 @@ class Ms_simulation(Tqg_simulation):
         
         self.do_center_pi = do_center_pi
         self.do_Walsh = do_Walsh
-        self.second_loop_phase_error = second_loop_phase_error
+        self.second_loop_phase_error = second_loop_phase_error # only != 0 if miscalibrate phase of second loop
+        self.phi_comp_scnd_sb = phi_comp_scnd_sb # only != 0 if accidentally compensate the phase of one (R)SB differently than the other (B)SB
         
         if scramble_phases:
             self.mw_offset_phase_1 = random.random()*2*pi # use this phase offset for mw pulses because they don't have a fixed phase relationship to gate lasers
@@ -79,15 +81,20 @@ class Ms_simulation(Tqg_simulation):
             self.mw_offset_phase_2 = self.mw_offset_phase_1
             
     
-    def ms_force_asym(self,rho_in,times,phi_offset=0):
+    def ms_force_asym(self,rho_in,times,phi_offset=0,scnd_loop=False):
+        
+        if scnd_loop:
+            phi_comp_scnd_sb = self.phi_comp_scnd_sb/360*2*pi
+        else:
+            phi_comp_scnd_sb = 0
         
         # ms hamiltonian, time independent parts
-        H1  = -1j/2*self.ad*(self.Omega_R_1*self.eta_1*(1-self.ampl_asym_1)*exp(1j*(self.phi_diff_1+self.phi_sum_1))*self.sp_id+
-                             self.Omega_R_2*self.eta_2*(1-self.ampl_asym_2)*exp(1j*(self.phi_diff_2+self.phi_sum_2))*self.id_sp) # Omega_plus
+        H1  = -1j/2*self.ad*(self.Omega_R_1*self.eta_1*(1-self.ampl_asym_1)*exp(1j*(self.phi_diff_1+self.phi_sum_1+phi_comp_scnd_sb))*self.sp_id+
+                             self.Omega_R_2*self.eta_2*(1-self.ampl_asym_2)*exp(1j*(self.phi_diff_2+self.phi_sum_2+phi_comp_scnd_sb))*self.id_sp) # Omega_plus
         H1b =  1j/2*self.ad*(self.Omega_R_1*self.eta_1*(1+self.ampl_asym_1)*exp(1j*(self.phi_diff_1-self.phi_sum_1))*self.sm_id+
                              self.Omega_R_2*self.eta_2*(1+self.ampl_asym_2)*exp(1j*(self.phi_diff_2-self.phi_sum_2))*self.id_sm) # Omega_minus
-        H2  =  1j/2*self.a *(self.Omega_R_1*self.eta_1*(1-self.ampl_asym_1)*exp(-1j*(self.phi_diff_1+self.phi_sum_1))*self.sm_id+
-                             self.Omega_R_2*self.eta_2*(1-self.ampl_asym_2)*exp(-1j*(self.phi_diff_2+self.phi_sum_2))*self.id_sm) # Omega_plus
+        H2  =  1j/2*self.a *(self.Omega_R_1*self.eta_1*(1-self.ampl_asym_1)*exp(-1j*(self.phi_diff_1+self.phi_sum_1+phi_comp_scnd_sb))*self.sm_id+
+                             self.Omega_R_2*self.eta_2*(1-self.ampl_asym_2)*exp(-1j*(self.phi_diff_2+self.phi_sum_2+phi_comp_scnd_sb))*self.id_sm) # Omega_plus
         H2b = -1j/2*self.a *(self.Omega_R_1*self.eta_1*(1+self.ampl_asym_1)*exp(-1j*(self.phi_diff_1-self.phi_sum_1))*self.sp_id+
                              self.Omega_R_2*self.eta_2*(1+self.ampl_asym_2)*exp(-1j*(self.phi_diff_2-self.phi_sum_2))*self.id_sp) # Omega_minus
 
@@ -181,7 +188,7 @@ class Ms_simulation(Tqg_simulation):
                     phi = pi+self.second_loop_phase_error#delta_g*times[ii]+pi
                 else:
                     phi = 0+self.second_loop_phase_error
-                after_second_loop = self.ms_force_asym(rho_after_pi, [0,times[ii]], phi_offset=phi)
+                after_second_loop = self.ms_force_asym(rho_after_pi, [0,times[ii]], phi_offset=phi, scnd_loop=True)
                 #after_second_loop = self.ms_force(rho_after_pi, [0,times[ii]], phi_offset=phi)
                 if self.phase_insensitive:
                     rho_after_2nd_laser_piB2 =  self.U_rot(pi/2*self.sq_factor,ion_index=[1,0],phi=-self.phi_sum_1)* \
