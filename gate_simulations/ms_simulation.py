@@ -12,7 +12,7 @@ from gate_simulations.tqg_simulation import Tqg_simulation
 
 class Ms_simulation(Tqg_simulation):
 
-    def __init__(self,scramble_phases=True,do_center_pi=False,do_Walsh=False,**kwargs):  
+    def __init__(self,scramble_phases=True,do_center_pi=False,do_Walsh=False,second_loop_phase_error=0,**kwargs):  
         ''' nHO: dimension of HO space which is simulated
         nbar_mode: mean thermal population of motional mode
         delta_g: gate detuning
@@ -43,6 +43,7 @@ class Ms_simulation(Tqg_simulation):
         
         self.do_center_pi = do_center_pi
         self.do_Walsh = do_Walsh
+        self.second_loop_phase_error = second_loop_phase_error
         
         if scramble_phases:
             self.mw_offset_phase_1 = random.random()*2*pi # use this phase offset for mw pulses because they don't have a fixed phase relationship to gate lasers
@@ -177,9 +178,9 @@ class Ms_simulation(Tqg_simulation):
                 else:
                     rho_after_pi = rho_t
                 if self.do_Walsh:
-                    phi = pi#delta_g*times[ii]+pi
+                    phi = pi+self.second_loop_phase_error#delta_g*times[ii]+pi
                 else:
-                    phi = 0
+                    phi = 0+self.second_loop_phase_error
                 after_second_loop = self.ms_force_asym(rho_after_pi, [0,times[ii]], phi_offset=phi)
                 #after_second_loop = self.ms_force(rho_after_pi, [0,times[ii]], phi_offset=phi)
                 if self.phase_insensitive:
