@@ -1,11 +1,11 @@
 import numpy as np
 from scipy import constants as u
 from math import pi, sin, cos, sqrt
-#from python_library.ion_physics.mode_frequencies import Mode_frequencies
+
 
 class Lamb_Dicke_Factor():
     def __init__(self,nu=755.222766e12,f_z=1.924e6,N=1,m1=43,m2=0,is_qudpl=False,
-                 delta=0,species=None,epsilon=0,qudpl_and_raman=False):
+                 delta=0,species=None,epsilon=0,qudpl_and_raman=False, raman_misalignment=0):
         """ Calculates Lamb-Dicke factors for mixed species crystals
         nu: laser resonance frequency in Hz
         f_z: motional mode frequency OF SINGLE ION in Hz
@@ -22,72 +22,82 @@ class Lamb_Dicke_Factor():
         else:
             self.nu = nu + delta
             self.is_qudpl = is_qudpl
+            self.is_qudpl_2 = self.is_qudpl
             self.f_z = f_z
             self.N = N
             self.m1 = m1
             self.m2 = m2
-        self.beta_radial = 60/360*2*pi # for quadrupole laser, 0 for Raman lasers
+        self.beta_radial = 60/360*2*pi # 60 for quadrupole laser, 90 for Raman lasers
+        self.beta_radial_raman = (90+raman_misalignment)/360*2*pi # for quadrupole laser, 90 for Raman lasers
         self.beta_axial = 45/360*2*pi
         self.epsilon = epsilon
             
     def set_species(self,species):
         #self.mf = Mode_frequencies(species=species)
-        if (species is '88') or (species is '8888'):
+        if (species == '88') or (species == '8888'):
             self.nu = 444.779044095e12 + self.delta
             self.is_qudpl = True
+            self.is_qudpl_2 = self.is_qudpl
             self.m1 = 88
             self.mixed_species = False
-            if species is '88':
+            if species == '88':
                 self.N = 1
-            elif species is '8888':
+            elif species == '8888':
                 self.N = 2
                 self.m2 = 88
-        elif (species is '43') or (species is '4343'):
+        elif (species == '43') or (species == '4343'):
             self.nu = 755.222766e12 + self.delta
             self.is_qudpl = False
+            self.is_qudpl_2 = self.is_qudpl
             self.m1 = 43
             self.mixed_species = False
-            if species is '43':
+            if species == '43':
                 self.N = 1
-            elif species is '4343':
+            elif species == '4343':
                 self.N = 2
                 self.m2 = 43
-        elif species is '4388':
+        elif species == '4388':
+            self.nu = 755.222766e12 + self.delta
+            self.is_qudpl = False
             if self.qudpl_and_raman:
                 self.nu_2 = 444.779044095e12 + self.delta
                 self.is_qudpl_2 = True
-            self.nu = 755.222766e12 + self.delta
-            self.is_qudpl = False
+            else:
+                self.is_qudpl_2 = self.is_qudpl
             self.N = 2
             self.m1 = 43
             self.m2 = 88
             self.mixed_species = True
-        elif species is '8843':
+        elif species == '8843':
+            self.nu = 444.779044095e12 + self.delta
+            self.is_qudpl = True
             if self.qudpl_and_raman:
                 self.nu_2 = 755.222766e12 + self.delta
                 self.is_qudpl_2 = False
-            self.nu = 444.779044095e12 + self.delta
-            self.is_qudpl = True
+            else:
+                self.is_qudpl_2 = self.is_qudpl
             self.N = 2
             self.m1 = 88
             self.m2 = 43
             self.mixed_species = True
-        elif (species is '40') or (species is '4040'):
+        elif (species == '40') or (species == '4040'):
             self.nu = 411.0421297763932e12 + self.delta
             self.is_qudpl = True
+            self.is_qudpl_2 = self.is_qudpl
 #            self.nu = 755.222766e12 + self.delta
 #            self.is_qudpl = False
             #self.f_z = 1.23e6 # from J. Benhelm paper
             self.m1 = 40
             self.mixed_species = False
-            if species is '40':
+            if species == '40':
                 self.N = 1
-            elif species is '4040':
+            elif species == '4040':
                 self.N = 2
                 self.m2 = 40
-        elif species is '4043':
+        elif species == '4043':
             self.nu = 755.222766e12 + self.delta
             self.is_qudpl = False
+            self.is_qudpl_2 = self.is_qudpl
             #self.f_z = 1.998e6
             self.N = 2
             self.m1 = 40
@@ -106,17 +116,17 @@ class Lamb_Dicke_Factor():
     def _calc_zeta(self,mode_name='ax_ip'):
         #a = sy.sqrt(eps**2*(mu**2-1)**2-2*eps**2*(mu-1)**2*mu*(1+mu)+mu**2*(1+(mu-1)*mu))
         mu= self.m2/self.m1
-        if mode_name is 'ax_ip': # TODO extend for rocking modes
+        if mode_name == 'ax_ip': # TODO extend for rocking modes
             b1z = np.sqrt((1-mu+np.sqrt(1-mu+mu**2))/(2*np.sqrt(1-mu+mu**2)))
             b2z = np.sqrt(1-b1z**2)
-        elif mode_name is 'ax_oop':
+        elif mode_name == 'ax_oop':
             b2z = -np.sqrt((1-mu+np.sqrt(1-mu+mu**2))/(2*np.sqrt(1-mu+mu**2)))
             b1z = np.sqrt(1-b2z**2)
-        elif (mode_name is 'rad_ip_l') or (mode_name is 'rad_ip_u'):
+        elif (mode_name == 'rad_ip_l') or (mode_name == 'rad_ip_u'):
             a = np.sqrt(self.epsilon**4*(mu**2-1)**2-2*self.epsilon**2*(mu-1)**2*mu*(1+mu)+mu**2*(1+(mu-1)*mu))
             b1z = (mu-mu**2+self.epsilon**2*(mu**2-1)+a)/(2*a)
             b2z = np.sqrt(1-b1z**2)
-        elif (mode_name is 'rad_oop_l') or (mode_name is 'rad_oop_u'):
+        elif (mode_name == 'rad_oop_l') or (mode_name == 'rad_oop_u'):
             a = np.sqrt(self.epsilon**4*(mu**2-1)**2-2*self.epsilon**2*(mu-1)**2*mu*(1+mu)+mu**2*(1+(mu-1)*mu))
             b2z = -(mu-mu**2+self.epsilon**2*(mu**2-1)+a)/(2*a)
             b1z = np.sqrt(1-b2z**2)
@@ -137,19 +147,26 @@ class Lamb_Dicke_Factor():
     
     def _lamb_dicke_2_ions(self,mode_freq,mode_name,ion_ind,beta_arg):
         zeta_1, zeta_2 = self._calc_zeta(mode_name=mode_name)
-        if ion_ind is 1:
+        if ion_ind == 1:
             zeta = zeta_1
             m = self.m1
         else:
             zeta = zeta_2
             m = self.m2
-        if beta_arg is not 0:
+        if beta_arg != 0:
             beta = beta_arg
         else:
-            if (mode_name is 'ax_oop') or (mode_name is 'ax_ip'):
+            if (mode_name == 'ax_oop') or (mode_name == 'ax_ip'):
                 beta = self.beta_axial
             else:
-                beta = self.beta_radial
+                if ion_ind == 1:
+                    is_qudpl = self.is_qudpl
+                else:
+                    is_qudpl = self.is_qudpl_2
+                if is_qudpl:
+                    beta = self.beta_radial
+                else:
+                    beta = self.beta_radial_raman
         f_z = mode_freq/(2*pi)
         if ion_ind == 2:
             if self.qudpl_and_raman:
