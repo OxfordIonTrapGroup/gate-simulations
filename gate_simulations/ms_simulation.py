@@ -12,7 +12,7 @@ from gate_simulations.tqg_simulation import Tqg_simulation
 
 class Ms_simulation(Tqg_simulation):
 
-    def __init__(self,scramble_phases=True,**kwargs):  
+    def __init__(self,scramble_phases=True,do_center_pi=False,do_Walsh=False,**kwargs):  
         ''' nHO: dimension of HO space which is simulated
         nbar_mode: mean thermal population of motional mode
         delta_g: gate detuning
@@ -40,6 +40,9 @@ class Ms_simulation(Tqg_simulation):
         are changed by previously run scans !'''
         
         super().__init__(**kwargs)
+        
+        self.do_center_pi = do_center_pi
+        self.do_Walsh = do_Walsh
         
         if scramble_phases:
             self.mw_offset_phase_1 = random.random()*2*pi # use this phase offset for mw pulses because they don't have a fixed phase relationship to gate lasers
@@ -165,12 +168,18 @@ class Ms_simulation(Tqg_simulation):
         for ii in range(len(times)):
             rho_t = after_ms.states[ii]
             if self.two_loops:
-                rho_after_pi =  self.U_rot(pi*self.sq_factor,ion_index=[1,0],phi=-self.phi_sum_1)*\
-                                self.U_rot(pi*self.sq_factor,ion_index=[0,1],phi=-self.phi_sum_2)*\
-                                rho_t*\
-                                self.U_rot(pi*self.sq_factor,ion_index=[1,0],phi=-self.phi_sum_1).dag() *\
-                                self.U_rot(pi*self.sq_factor,ion_index=[0,1],phi=-self.phi_sum_2).dag()
-                phi = pi#delta_g*times[ii]+pi
+                if self.do_center_pi:
+                    rho_after_pi =  self.U_rot(pi*self.sq_factor,ion_index=[1,0],phi=-self.phi_sum_1)*\
+                                    self.U_rot(pi*self.sq_factor,ion_index=[0,1],phi=-self.phi_sum_2)*\
+                                    rho_t*\
+                                    self.U_rot(pi*self.sq_factor,ion_index=[1,0],phi=-self.phi_sum_1).dag() *\
+                                    self.U_rot(pi*self.sq_factor,ion_index=[0,1],phi=-self.phi_sum_2).dag()
+                else:
+                    rho_after_pi = rho_t
+                if self.do_Walsh:
+                    phi = pi#delta_g*times[ii]+pi
+                else:
+                    phi = 0
                 after_second_loop = self.ms_force_asym(rho_after_pi, [0,times[ii]], phi_offset=phi)
                 #after_second_loop = self.ms_force(rho_after_pi, [0,times[ii]], phi_offset=phi)
                 if self.phase_insensitive:
