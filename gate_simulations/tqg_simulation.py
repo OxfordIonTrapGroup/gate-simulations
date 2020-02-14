@@ -461,6 +461,22 @@ class Tqg_simulation():
             
         return n_dots, errors
     
+    def scan_sq_error(self,sq_factor_max=1.05,sq_factor_min=0.995,n_steps=10,**kwargs):
+        # simulate gate fidelity for different heating rates
+        # initialize result vectors
+        self.set_custom_parameters(**kwargs)
+        
+        errors = []
+        rho_target = 1/2*(self.uu_uu+self.dd_dd-1j*self.ud_ud+1j*self.du_du)
+        sq_factors = np.linspace(sq_factor_min, sq_factor_max, n_steps)
+
+        for sq_factor in sq_factors:
+            self.set_sq_pulse_miscalibration(sq_factor)
+            times, final_rhos = self.do_gate()
+            errors.append(1-fidelity(rho_target,ptrace(final_rhos[-1],[0,1]))**2)
+            
+        return sq_factors, errors
+    
     def scan_delta_g(self,delta_max=10e3,delta_min=300e3,n_steps=10,**kwargs):
         # simulate gate fidelity for different gate detunings, with t_g and Omega_R
         # optimised for this delta_g
