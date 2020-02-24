@@ -2,7 +2,7 @@ import numpy as np
 from math import pi, sqrt
 
 class Mode_frequencies():
-    def __init__(self,species='8888',freqs=None,m1=None,m2=None):
+    def __init__(self,species='8888',single_ion_freqs=None,m1=None,m2=None):
         """ 
         Calculate motional mode frequencies of ion crystals
         TODO: implement mixed species radial modes
@@ -12,55 +12,55 @@ class Mode_frequencies():
         """
         self.freqs = {}
         
-        if len(species) is 4:
+        if len(species) == 4:
             self.mode_names = ['ax_ip','ax_oop','rad_ip_l','rad_ip_u','rad_oop_l','rad_oop_u']
             self.is_single_ion = False
-            if species[0:2] is species[2:4]:
+            if species[0:2] == species[2:4]:
                 self.is_mixed_species = False
             else:
                 self.is_mixed_species = True
             self.m1 = int(species[0:2])
             self.m2 = int(species[2:4])
-        elif len(species) is 2:
+        elif len(species) == 2:
             self.mode_names = ['ax_ip','rad_ip_l','rad_ip_u']
             self.is_mixed_species = False
             self.is_single_ion = True
             self.m1 = int(species)
             self.epsilon = 0 # not relevant
 
-        if species is '8888':
+        if species == '8888':
             ax_freq = 2*pi*1.3414*1e6
             rad_freq_l = 2*pi*1.92*1e6
             rad_freq_u = 2*pi*2.06*1e6
             self.set_frequencies(ax_freq,rad_freq_l,rad_freq_u)
-        elif species is '4343':
+        elif species == '4343':
             ax_freq = 2*pi*1.924e6
-            rad_freq_l = 2*pi*4.0e6 #TODO set
-            rad_freq_u = 2*pi*4.3e6 #TODO set
+            rad_freq_l = 2*pi*3.93e6 
+            rad_freq_u = 2*pi*4.22e6 
             self.set_frequencies(ax_freq,rad_freq_l,rad_freq_u)
-        elif species is '4040':
+        elif species == '4040':
             ax_freq = 2*pi*1.997e6
             rad_freq_l = 2*pi*4.402e6 
             rad_freq_u = 2*pi*4.685e6 
             self.set_frequencies(ax_freq,rad_freq_l,rad_freq_u)
-        elif species is '4388' or '8843':
+        elif species == '4388' or '8843':
             ax_freq = 2*pi*1.924e6
-            rad_freq_l = 2*pi*4.0e6 #TODO set
-            rad_freq_u = 2*pi*4.3e6 #TODO set
+            rad_freq_l = 2*pi*3.93e6 
+            rad_freq_u = 2*pi*4.22e6 
             self.set_frequencies(ax_freq,rad_freq_l,rad_freq_u)
-        elif species is '88':
+        elif species == '88':
             self.freqs['ax_ip'] = 2*pi*1.34175e6
             self.freqs['ax_oop'] = self.f_oop(self.freqs['ax_ip'])
-        elif species is '43':
+        elif species == '43':
             self.freqs['ax_ip'] = 2*pi*1.924e6
             self.freqs['ax_oop'] = self.f_oop(self.freqs['ax_ip'])
-        elif freqs is None:
+        elif single_ion_freqs == None:
             print('Species not implemented, set frequencies and masses manually!')            
-        if freqs is not None:
-            self.set_frequencies(ax_freq=freqs[0],rad_freq_l=freqs[1],rad_freq_u=freqs[2])
-        if m1 is not None:
+        if single_ion_freqs != None:
+            self.set_frequencies(ax_freq=single_ion_freqs[0],rad_freq_l=single_ion_freqs[1],rad_freq_u=single_ion_freqs[2])
+        if m1 != None:
             self.m1 = m1
-        if m2 is not None:
+        if m2 != None:
             self.m2 = m2
         
             
@@ -116,6 +116,9 @@ class Mode_frequencies():
         self.freqs['rad_oop_l'] = rad_freq_oop_l
         self.freqs['rad_ip_u'] = rad_freq_ip_u
         self.freqs['rad_oop_u'] = rad_freq_oop_u
+        # !Caution! epsilon not update here, bc need to single ion freqs for that
+        # this will cause errors if programmed frequencies here are very different to default ones
+        # but since usually only the radial requencies are different, it should be fine
 
                 
             

@@ -9,6 +9,8 @@ from qutip import expect, fidelity, ptrace, sigmam, sigmap, sigmax, sigmay, basi
 import random
 from gate_simulations.lamb_dicke_factor import Lamb_Dicke_Factor
 from gate_simulations.mode_frequencies import Mode_frequencies
+from python_library.ion_physics.motional_modes import Mode_structure
+from qutip import thermal_dm
 
 # Two qubit gate simulation parent class
 class Tqg_simulation():
@@ -19,7 +21,8 @@ class Tqg_simulation():
                  factor=1,tau_mot=0,tau_spin=0,gamma_el=0,gamma_ram=0,
                  Delta_ca=-2*pi*10e12,Delta_sr=2*pi*30e12,Omega_R_2=2*pi*80e3,
                  phase_insensitive=False,sq_factor=1.0,qudpl_and_raman=False,
-                 on_radial_modes=False):  
+                 on_radial_modes=False,nbars = [0.1,0.1,5,5,5,5],
+                 mode_freqs=None):  
         ''' nHO: dimension of HO space which is simulated
         nbar_mode: mean thermal population of motional mode
         delta_g: gate detuning
@@ -28,7 +31,7 @@ class Tqg_simulation():
         two loops: do two-loop (True) or single loop (false) gate
         species: ion species of crystal
         ion-spacing: integer (+1) or half-integer (-1) standing wavelengths
-        mode: ip (1) or oop (-1)
+        mode: ip (1) or oop (-1), this code assumes gate is performed an axial mode
         factor: square-root of ratio of Rabi frequencies for efficiency tests
         tau_mot: motional coherence time, =0 for intinity
         tau_spin: spin coherence time, =0 for intinity
@@ -43,6 +46,9 @@ class Tqg_simulation():
         phase_insensitive: wraps gate in single qubit operations driven by gate laser, to make it insensitive
                            relative to phase of other single qubit operations
         qudpl_and_raman: use two different lasers for MS gate, with different lamb-dicke factors
+        on_radial_modes: does gate on radial modes, but still sets it up for axial modes, 
+                         this is used for simulating off-resonant excitation of radial modes for a tilted ion crystal
+        nbars: temperature of all modes, this is only used for calculating errors from off-resonantly exciting other modes
         ! Note that most gate parameters are class objects, and therefore parameters
         are changed by previously run scans !
         '''
@@ -73,7 +79,21 @@ class Tqg_simulation():
         self.sq_factor = sq_factor
         self.qudpl_and_raman = qudpl_and_raman
         self.on_radial_modes = on_radial_modes
-
+        self.nbars = nbars
+        
+        if mode == 1:
+            self.nbars[0] = self.nbar_mode
+        elif mode == -1:
+            self.nbars[1] = self.nbar_mode
+        
+        if self.species == 'effic_test':
+            ion_species = '8888'
+        else:
+            ion_species = self.species
+            
+        self.modes = Mode_structure(nbars=self.nbars,species=ion_species,
+                                    qudpl_and_raman=self.qudpl_and_raman)
+        self.modes.set_frequencies_manually(*mode_freqs)
 
         # single qubit operators
         self.up_up = fock_dm(2,0) # |up><up|
@@ -159,50 +179,48 @@ class Tqg_simulation():
         rot=tensor(op_1,op_2,qeye(self.nHO))
         return rot
     
+    def set_frequencies_manually(self,freqs):
+        self.modes.set_frequencies_manually(*freqs)
+    
     def set_ion_parameters(self):
         # set approximate heating rate and lamb dicke parameters according to ions species
         self.set_lamb_dicke_factors()
-        if self.species is '4388':
-            if self.mode is 1: #ip mode
+        if self.species == '4388':
+            if self.mode == 1: #ip mode
                 self.n_dot = 120
             else: # oop mode
                 self.n_dot = 8
             self.mixed_species = True
         else:
-            if self.mode is 1: #ip mode
+            if self.mode == 1: #ip mode
                 self.n_dot = 1e2
             else: # oop mode
                 self.n_dot = 1
-            if self.species is '4043':
+            if self.species == '4043':
                 self.mixed_species = True
             else:
                 self.mixed_species = False
 
             
-    def set_lamb_dicke_factors(self):
+    def set_lamb_dicke_factors(self,mode_name=None,raman_misalignment=0):
         # set lamb dicke parameters according to ions species
         # look up in Lamb_Dicke_Factor what laser is pre-set for which species
         # (i.e. Raman or quadrupole)
-        if self.species == 'effic_test':
-            species = '8888'
-        else:
-            species = self.species
-        ld = Lamb_Dicke_Factor(species=species,qudpl_and_raman=self.qudpl_and_raman)
-        modes = Mode_frequencies(species=species)
-        if self.on_radial_modes:
-            if self.mode == 1:
-                mode_name = 'rad_ip_l'
-            elif self.mode == -1:
-                mode_name = 'rad_oop_l'
-        else:
-            if self.mode == 1:
-                mode_name = 'ax_ip'
-            elif self.mode == -1:
-                mode_name = 'ax_oop'
-        mode_freq = modes.freqs[mode_name]
-        self.omega_z = mode_freq
-        self.eta_1 = abs(ld.calc_lamb_dicke(mode_freq,mode_name=mode_name,ion_ind=1))
-        self.eta_2 = abs(ld.calc_lamb_dicke(mode_freq,mode_name=mode_name,ion_ind=2))
+        if mode_name == None:
+            if self.on_radial_modes:
+                if self.mode == 1:
+                    mode_name = 'rad_ip_l'
+                elif self.mode == -1:
+                    mode_name = 'rad_oop_l'
+            else:
+                if self.mode == 1:
+                    mode_name = 'ax_ip'
+                elif self.mode == -1:
+                    mode_name = 'ax_oop'
+        self.modes.set_raman_misalignement(raman_misalignment)
+        self.omega_z = self.modes.modes[mode_name].freq
+        self.eta_1 = abs(self.modes.modes[mode_name].eta)
+        self.eta_2 = abs(self.modes.modes[mode_name].eta_2)
         
     def return_omega_mode(self):
         # read out mode frequency used for simulation, programmed into Mode_frequencies
@@ -460,6 +478,26 @@ class Tqg_simulation():
             errors.append(1-fidelity(rho_target,ptrace(final_rhos[-1],[0,1]))**2)
             
         return n_dots, errors
+    
+    def scan_tilt_angle(self,angle_max=10/360*2*pi,angle_min=-10/360*2*pi,n_steps=10,mode_name='rad_ip_l',**kwargs):
+        # simulate gate fidelity for different heating rates
+        # initialize result vectors
+        self.set_custom_parameters(**kwargs)
+        
+        errors = []
+        rho_target = tensor(self.dn_dn,self.dn_dn)
+        tilt_angles = np.linspace(angle_min, angle_max, n_steps)
+        
+        self.set_ion_temp(self.modes.modes[mode_name].nbar)
+        detuning_offset = self.omega_z - self.modes.modes[mode_name].freq
+        self.set_gate_detuning(self.delta_g+detuning_offset)
+
+        for angle in tilt_angles:
+            self.set_lamb_dicke_factors(mode_name=mode_name,raman_misalignment=angle)
+            times, final_rhos = self.do_gate()
+            errors.append(1-fidelity(rho_target,ptrace(final_rhos[-1],[0,1]))**2)
+            
+        return tilt_angles, errors
     
     def scan_sq_error(self,sq_factor_max=1.05,sq_factor_min=0.995,n_steps=10,**kwargs):
         # simulate gate fidelity for different heating rates

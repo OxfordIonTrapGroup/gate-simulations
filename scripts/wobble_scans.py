@@ -42,6 +42,7 @@ plt.locator_params(axis='y', nbins=5)
 plt.locator_params(axis='x', nbins=5)
 ax1.set_xlabel('$t_{g,tot}=2\cdot t_g$')
 
+
 #%%
 ### parity scan
 #phi_vec = np.linspace(0,2*pi,100)

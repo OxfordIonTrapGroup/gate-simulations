@@ -9,6 +9,7 @@ from qutip import qeye, tensor, destroy, fock_dm, rx, ry, mesolve, thermal_dm, e
 import pylab as pyl
 from scipy import constants as u
 from gate_simulations.tqg_simulation import Tqg_simulation
+from qutip.solver import Options
 
 class Wobble_simulation(Tqg_simulation):
 
@@ -43,8 +44,8 @@ class Wobble_simulation(Tqg_simulation):
 
         
     
-    def set_ion_parameters(self):
-        super().set_ion_parameters() #TODO: include Raman detuning into eta for mixed species
+    def set_ion_parameters(self,**kwargs):
+        super().set_ion_parameters(**kwargs) #TODO: include Raman detuning into eta for mixed species
         self.set_relative_Rabi_frequencies()
         
     def set_relative_Rabi_frequencies(self):
@@ -128,7 +129,9 @@ class Wobble_simulation(Tqg_simulation):
             c_ops_wobble.append(sqrt(1/self.tau_spin/2)*tensor(self.sz,qeye(2),qeye(self.nHO)))
             c_ops_wobble.append(sqrt(1/self.tau_spin/2)*tensor(qeye(2),self.sz,qeye(self.nHO)))
         # integrate Hamiltonian
-        after_wobble = mesolve(H_wobble, rho_in, times, c_ops_wobble, [])
+        options = Options()
+        options.nsteps = 50000
+        after_wobble = mesolve(H_wobble, rho_in, times, c_ops_wobble, [], options=options)
         return after_wobble
     
     def do_gate(self,nT=2):
