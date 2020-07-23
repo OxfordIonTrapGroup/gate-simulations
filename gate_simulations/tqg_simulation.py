@@ -75,6 +75,7 @@ class Tqg_simulation():
         self.delta_LS = 0 # frequency offset due to light shift
         self.ampl_asym_1 = 0 # amplitude asymmetry in sidebands
         self.ampl_asym_2 = 0 # amplitude asymmetry in sidebands of second species laser
+        self.species_Rabi_asym_MS = 0 # Rabi frequency asymmetry btw the two species, for MS gate
         self.phase_insensitive = phase_insensitive # surround gate pulse with pi/2 pulses so that can use analysis pulse that is not phase-stabilised to gate
         self.sq_factor = sq_factor
         self.qudpl_and_raman = qudpl_and_raman
@@ -93,7 +94,8 @@ class Tqg_simulation():
             
         self.modes = Mode_structure(nbars=self.nbars,species=ion_species,
                                     qudpl_and_raman=self.qudpl_and_raman)
-        self.modes.set_frequencies_manually(*mode_freqs)
+        if mode_freqs != None:
+            self.modes.set_frequencies_manually(*mode_freqs)
 
         # single qubit operators
         self.up_up = fock_dm(2,0) # |up><up|
@@ -281,6 +283,9 @@ class Tqg_simulation():
     def set_ampl_asym_2(self,ampl_asym_2=None):
         self.ampl_asym_2 = ampl_asym_2
         
+    def set_species_Rabi_asym_MS(self,species_Rabi_asym_MS=None):
+        self.species_Rabi_asym_MS = species_Rabi_asym_MS
+        
     def calc_ideal_gate_detuning(self,T=None,verbose=True):
         if T is not None:
             T = self.t_g
@@ -306,7 +311,7 @@ class Tqg_simulation():
     def set_custom_parameters(self,delta_g=None,Omega_R=None,Omega_R_2=None,
                               T=None,ndot=None,delta_LS=None,ampl_asym=None,
                               ampl_asym_2=None,tau_mot=None,factor=None,gamma_el=None,
-                              gamma_ram=None,tau_spin=None):
+                              gamma_ram=None,tau_spin=None,species_Rabi_asym_MS=None):
         # if not set separately, t_g and Omega_R are calculated from self.delta_g
         # delta_g is not calculated, but remains its old value if it isn't set explicitly
         if delta_g is not None:
@@ -315,6 +320,8 @@ class Tqg_simulation():
             self.set_gate_length(T)
         else:
             self.set_gate_length(self.calc_ideal_gate_time(verbose=False))
+        if species_Rabi_asym_MS is not None:
+            self.set_species_Rabi_asym_MS(species_Rabi_asym_MS)
         if Omega_R is not None:
             self.set_Rabi_freq(Omega_R)
         else:

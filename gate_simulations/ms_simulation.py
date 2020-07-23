@@ -64,11 +64,11 @@ class Ms_simulation(Tqg_simulation):
         self.set_phases()
         
     def set_relative_Rabi_frequencies(self):
-        self.Omega_R_1 = self.Omega_R
+        self.Omega_R_1 = (1-self.species_Rabi_asym_MS)*self.Omega_R
         if self.mixed_species:
-            self.Omega_R_2 = self.Omega_R_2 #TODO, check what this is set to currently
+            self.Omega_R_2 = (1+self.species_Rabi_asym_MS)*self.Omega_R_2 #TODO, check what this is set to currently
         else:
-            self.Omega_R_2 = self.Omega_R
+            self.Omega_R_2 = (1+self.species_Rabi_asym_MS)*self.Omega_R
             
     def set_phases(self):
         if self.mixed_species:
