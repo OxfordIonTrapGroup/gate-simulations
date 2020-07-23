@@ -5,7 +5,7 @@ from math import pi, sin, cos, sqrt
 
 class Lamb_Dicke_Factor():
     def __init__(self,nu=755.222766e12,f_z=1.924e6,N=1,m1=43,m2=0,is_qudpl=False,
-                 delta=0,species=None,epsilon=0,qudpl_and_raman=False, raman_misalignment=0):
+                 delta=0,species=None,epsilon=0,qudpl_and_raman=False, raman_misalignment=0, qdp_misalignment=0):
         """ Calculates Lamb-Dicke factors for mixed species crystals
         nu: laser resonance frequency in Hz
         f_z: motional mode frequency OF SINGLE ION in Hz
@@ -28,9 +28,9 @@ class Lamb_Dicke_Factor():
             self.N = N
             self.m1 = m1
             self.m2 = m2
-        self.beta_radial_qdp = 60/360*2*pi # 60 for quadrupole laser, 90 for Raman lasers
+        self.beta_radial_qdp = (60-qdp_misalignment)/360*2*pi # 60 for quadrupole laser, 90 for Raman lasers
         self.beta_radial_raman = (90+raman_misalignment)/360*2*pi # 90 for Raman lasers
-        self.beta_axial_qdp = (0)/360*2*pi # 45 for qdp, 0 for raman lasers
+        self.beta_axial_qdp = (0-qdp_misalignment)/360*2*pi # 45 for qdp, 0 for raman lasers
         self.beta_axial_raman = (0+raman_misalignment)/360*2*pi # 45 for qdp, 0 for raman lasers
         self.alpha_raman = 90/360*2*pi # 45 for qdp, 0 for raman lasers
         self.alpha_qdp = pi/2 # formula different for quadrupole, but for these values and our geometry this gives correct result
