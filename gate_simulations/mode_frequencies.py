@@ -93,20 +93,28 @@ class Mode_frequencies():
     def set_frequencies(self,ax_freq,rad_freq_l,rad_freq_u,is_mixed_species=None,m1=None,m2=None):
         # all input frequencies are ip frequencies, from which oop freqs are calculated
         # for mixed species: single ion frequencies of ion 1
-        if m1 is None:
-            m1 = self.m1
-        if m2 is None:
-            m2 = self.m2
-        #TODO find correct formula for upper mode
-        omega_ip, omega_oop = self.calc_f_z_mixed_species(m1,m2,omega_z_si=ax_freq)
-        omega_rad_ip_l, omega_rad_oop_l = self.calc_f_rad_mixed_species(m1,m2,ax_freq,rad_freq_u,rad_freq_l)
-        self.freqs['ax_ip'] = omega_ip
-        self.freqs['ax_oop'] = omega_oop
-        self.freqs['rad_ip_l'] = omega_rad_ip_l
-        self.freqs['rad_oop_l'] = omega_rad_oop_l
-        self.freqs['rad_ip_u'] = omega_rad_ip_l
-        self.freqs['rad_oop_u'] = omega_rad_oop_l
-        self.epsilon = self.calc_epsilon(ax_freq,rad_freq_u,rad_freq_l)
+        if self.is_single_ion:
+            if m1 is None:
+                m1 = self.m1
+            self.freqs['ax'] = ax_freq
+            self.freqs['rad_l'] = rad_freq_l
+            self.freqs['rad_u'] = rad_freq_u
+            self.epsilon = self.calc_epsilon(ax_freq,rad_freq_u,rad_freq_l)
+        else:
+            if m1 is None:
+                m1 = self.m1
+            if m2 is None:
+                m2 = self.m2
+            #TODO find correct formula for upper mode
+            omega_ip, omega_oop = self.calc_f_z_mixed_species(m1,m2,omega_z_si=ax_freq)
+            omega_rad_ip_l, omega_rad_oop_l = self.calc_f_rad_mixed_species(m1,m2,ax_freq,rad_freq_u,rad_freq_l)
+            self.freqs['ax_ip'] = omega_ip
+            self.freqs['ax_oop'] = omega_oop
+            self.freqs['rad_ip_l'] = omega_rad_ip_l
+            self.freqs['rad_oop_l'] = omega_rad_oop_l
+            self.freqs['rad_ip_u'] = omega_rad_ip_l
+            self.freqs['rad_oop_u'] = omega_rad_oop_l
+            self.epsilon = self.calc_epsilon(ax_freq,rad_freq_u,rad_freq_l)
 
             
     def set_frequencies_manually(self,ax_freq_ip,ax_freq_oop,rad_freq_ip_l,rad_freq_ip_u,rad_freq_oop_l,rad_freq_oop_u):
