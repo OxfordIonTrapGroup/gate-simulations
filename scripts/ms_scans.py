@@ -68,9 +68,12 @@ species='4388'
 phase_insensitive = False
 delta_LS_0=0
 qudpl_and_raman = True
+ampl_asym_1 = 0.0
+species_Rabi_asym_MS = 0.0
+nbar_mode = 0.0
 
 
-ms_1 = Ms_simulation(nHO=15,nbar_mode=0.0,delta_g=delta_g_0,Omega_R=Omega_R_0,
+ms_1 = Ms_simulation(nHO=15,nbar_mode=nbar_mode,delta_g=delta_g_0,Omega_R=Omega_R_0,
                      Omega_R_2=Omega_R_2,two_loops=two_loops,species=species,
                      ion_spacing=-1,mode=mode,tau_spin=100e-3, 
                      phase_insensitive=phase_insensitive, qudpl_and_raman=qudpl_and_raman)
@@ -84,7 +87,7 @@ or_calculated = ms_1.calc_ideal_Rabi_freq()
 # fidelity calculation in MS timescan not correct because coherences depend on randomly chosen phi, 
 # target state doesn't track phase, populations are still fine
 times, end_pop_upup, end_pop_dndn, end_pop_updn, end_pop_dnup, fidelities = ms_1.timescan(
-        T=T_0,nT=100,delta_LS=delta_LS_0,ampl_asym=0,ndot=0)
+        T=T_0,nT=100,delta_LS=delta_LS_0,ampl_asym=ampl_asym_1,ampl_asym_2=0,ndot=0,species_Rabi_asym_MS=species_Rabi_asym_MS)
     
 fig, ax = plt.subplots()
 ax.plot(times/1e-6, end_pop_upup,label='p11')

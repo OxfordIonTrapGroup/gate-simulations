@@ -9,7 +9,7 @@ from numpy import exp, pi, sqrt
 ### gate initialisation
 
 wobble_1 = Wobble_simulation(nHO=15,nbar_mode=0.0,delta_g=2*pi*40e3,
-                 two_loops=True,species='4388',ion_spacing=-1,mode=1)
+                 two_loops=True,species='4388',ion_spacing=-1,mode=-1)
 #wobble_1 = Wobble_simulation(nHO=15,nbar_mode=0.1,delta_g=2*pi*40e3,
 #                 two_loops=True,species='effic_test',ion_spacing=-1,mode=1,
 #                 factor=0.5,tau_spin=9e-3,sq_factor=1.0)
