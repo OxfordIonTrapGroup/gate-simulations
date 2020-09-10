@@ -99,10 +99,14 @@ class Wobble_simulation(Tqg_simulation):
 
     def wobble_force(self,rho_in,times,phi_0=0):
         # wobble hamiltonian, time independent parts
-        H1 = -1j/2*self.ad*(self.Omega_R_up_1*self.eta_1*self.uu_id+self.Omega_R_up_2*self.eta_2*self.id_uu+
-                     self.Omega_R_dn_1*self.eta_1*self.dd_id+self.Omega_R_dn_2*self.eta_2*self.id_dd)
-        H2 = 1j/2*self.a*(self.Omega_R_up_1*self.eta_1*self.uu_id+self.Omega_R_up_2*self.eta_2*self.id_uu+
-                   self.Omega_R_dn_1*self.eta_1*self.dd_id+self.Omega_R_dn_2*self.eta_2*self.id_dd)
+        H1 = -1j/2*self.ad*(self.Omega_R_up_1*self.eta_1*self.uu_id+
+                            self.Omega_R_up_2*self.eta_2*self.id_uu+
+                            self.Omega_R_dn_1*self.eta_1*self.dd_id+
+                            self.Omega_R_dn_2*self.eta_2*self.id_dd)
+        H2 =  1j/2*self.a *(self.Omega_R_up_1*self.eta_1*self.uu_id+
+                            self.Omega_R_up_2*self.eta_2*self.id_uu+
+                            self.Omega_R_dn_1*self.eta_1*self.dd_id+
+                            self.Omega_R_dn_2*self.eta_2*self.id_dd)
         # wobble hamiltonian, time dependent parts
         def H1_coeff(t,args):
             return exp(-1j*(self.delta_g*t+phi_0))
