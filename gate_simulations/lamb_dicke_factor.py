@@ -114,6 +114,15 @@ class Lamb_Dicke_Factor():
             self.m1 = 40
             self.m2 = 43
             self.mixed_species = True
+        elif species == '0924':
+            self.nu = 755.222766e12 + self.delta #TODO change
+            self.is_qudpl = False
+            self.is_qudpl_2 = False
+            #self.f_z = 1.998e6
+            self.N = 2
+            self.m1 = 9
+            self.m2 = 24
+            self.mixed_species = True
         else:
             print('Species not predefined. Set custom values.')
             
