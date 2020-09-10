@@ -9,7 +9,7 @@ from qutip import expect, fidelity, ptrace, sigmam, sigmap, sigmax, sigmay, basi
 import random
 from gate_simulations.lamb_dicke_factor import Lamb_Dicke_Factor
 from gate_simulations.mode_frequencies import Mode_frequencies
-from python_library.ion_physics.motional_modes import Mode_structure
+from gate_simulations.motional_modes import Mode_structure
 from qutip import thermal_dm
 
 # Two qubit gate simulation parent class
@@ -223,6 +223,7 @@ class Tqg_simulation():
         self.omega_z = self.modes.modes[mode_name].freq
         self.eta_1 = abs(self.modes.modes[mode_name].eta)
         self.eta_2 = abs(self.modes.modes[mode_name].eta_2)
+        
         
     def return_omega_mode(self):
         # read out mode frequency used for simulation, programmed into Mode_frequencies
