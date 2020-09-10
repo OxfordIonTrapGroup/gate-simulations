@@ -6,7 +6,9 @@ from math import pi, sin, cos, sqrt
 class Lamb_Dicke_Factor():
     def __init__(self,nu=755.222766e12,f_z=1.924e6,N=1,m1=43,m2=0,is_qudpl=False,
                  delta=0,species=None,epsilon=0,qudpl_and_raman=False, raman_misalignment=0, qdp_misalignment=0):
-        """ Calculates Lamb-Dicke factors for mixed species crystals
+        """ Calculates Lamb-Dicke factors for mixed species crystals,
+        according to derivations in
+        Wübbena et al (2012): Sympathetic cooling of mixed-species two-ion crystals for precision spectroscopy
         nu: laser resonance frequency in Hz
         f_z: motional mode frequency OF SINGLE ION in Hz
         N: number of ions
@@ -146,13 +148,13 @@ class Lamb_Dicke_Factor():
             if self.epsilon == 0:
                 print('Error! Epsilon not set')
             a = np.sqrt(self.epsilon**4*(mu**2-1)**2-2*self.epsilon**2*(mu-1)**2*mu*(1+mu)+mu**2*(1+(mu-1)*mu))
-            b1z = (mu-mu**2+self.epsilon**2*(mu**2-1)+a)/(2*a)
+            b1z = np.sqrt((mu-mu**2+self.epsilon**2*(mu**2-1)+a)/(2*a))
             b2z = np.sqrt(1-b1z**2)
         elif (mode_name == 'rad_oop_l') or (mode_name == 'rad_oop_u'):
             if self.epsilon == 0:
                 print('Error! Epsilon not set')
             a = np.sqrt(self.epsilon**4*(mu**2-1)**2-2*self.epsilon**2*(mu-1)**2*mu*(1+mu)+mu**2*(1+(mu-1)*mu))
-            b2z = -(mu-mu**2+self.epsilon**2*(mu**2-1)+a)/(2*a)
+            b2z = -np.sqrt((mu-mu**2+self.epsilon**2*(mu**2-1)+a)/(2*a))
             b1z = np.sqrt(1-b2z**2)
         else:
             print('Error: mode not implemented')
