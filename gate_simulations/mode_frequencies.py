@@ -73,7 +73,7 @@ class Mode_frequencies():
     def calc_f_rad_mixed_species(self,m1,m2,omega_ip_si,omega_rad_u_si,omega_rad_l_si):
         mu= m2/m1
         #alpha = (1+(omega_rad_l**2-omega_rad_u**2)/omega_ip**2)/2
-        epsilon = np.sqrt((1+(omega_rad_l_si**2+omega_rad_u_si**2)/omega_ip_si**2)/2)
+        epsilon = self.calc_epsilon(omega_ip_si,omega_rad_u_si,omega_rad_l_si)
         a = np.sqrt(epsilon**4*(mu**2-1)**2-2*epsilon**2*(mu-1)**2*mu*(1+mu)+
                     mu**2*(1+(mu-1)*mu))
         omega_rad_ip_l =  np.sqrt(-(mu+mu**2-epsilon**2*(1+mu**2)-a)/(2*mu**2))*omega_ip_si
