@@ -81,21 +81,6 @@ class Tqg_simulation():
         self.qudpl_and_raman = qudpl_and_raman
         self.on_radial_modes = on_radial_modes
         self.nbars = nbars
-        
-        if mode == 1:
-            self.nbars[0] = self.nbar_mode
-        elif mode == -1:
-            self.nbars[1] = self.nbar_mode
-        
-        if self.species == 'effic_test':
-            ion_species = '8888'
-        else:
-            ion_species = self.species
-            
-        self.modes = Mode_structure(nbars=self.nbars,species=ion_species,
-                                    qudpl_and_raman=self.qudpl_and_raman)
-        if mode_freqs != None:
-            self.modes.set_frequencies_manually(*mode_freqs)
 
         # single qubit operators
         self.up_up = fock_dm(2,0) # |up><up|
@@ -151,7 +136,8 @@ class Tqg_simulation():
         self.mw_offset_phase_1 = random.random()*2*pi # use this phase offset for mw pulses because they don't have a fixed phase relationship to gate lasers
         self.phi_sum_1 = random.random()*2*pi # sum frequency of phases of two sidebands, ie the phase that determines phi in sigma_phi
         self.phi_diff_1 = random.random()*2*pi # difference frequency of phases of two sidebands, constant and ~0 for our frequency geometry
-        
+            
+        self.setup_mode_structure(mode_freqs)
         self.set_ion_parameters()
         
     def sig_phi(self,phi):
@@ -180,6 +166,20 @@ class Tqg_simulation():
             op_2 = qeye(self.nq)
         rot=tensor(op_1,op_2,qeye(self.nHO))
         return rot
+    
+    def setup_mode_structure(self,mode_freqs):
+        if self.mode == 1:
+            self.nbars[0] = self.nbar_mode
+        elif self.mode == -1:
+            self.nbars[1] = self.nbar_mode
+        if self.species == 'effic_test':
+            ion_species = '8888'
+        else:
+            ion_species = self.species
+        self.modes = Mode_structure(nbars=self.nbars,species=ion_species,
+                                    qudpl_and_raman=self.qudpl_and_raman)
+        if mode_freqs != None:
+            self.modes.set_frequencies_manually(*mode_freqs)
     
     def set_frequencies_manually(self,freqs):
         self.modes.set_frequencies_manually(*freqs)
