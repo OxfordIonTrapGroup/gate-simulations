@@ -57,6 +57,8 @@ class Ms_simulation(Tqg_simulation):
         
         self.set_ion_parameters()
         
+        self.rho_target =  1/2*(self.uu_uu+self.dd_dd+1j*self.ud_ud-1j*self.du_du)
+        
     
     def set_ion_parameters(self):
         super().set_ion_parameters()
@@ -167,6 +169,13 @@ class Ms_simulation(Tqg_simulation):
                                    self.U_rot(pi/2*self.sq_factor,ion_index=[1,0],phi=-self.phi_sum_1).dag() *\
                                    self.U_rot(pi/2*self.sq_factor,ion_index=[0,1],phi=-self.phi_sum_2).dag()
             rho_before_MS_interaction = rho_after_laser_piB2
+        elif self.ms_ls_exp:
+            rho_after_piB2 = self.U_rot(pi/2*self.sq_factor,ion_index=[1,0],phi=-self.phi_sum_1)* \
+                                   self.U_rot(pi/2*self.sq_factor,ion_index=[0,1],phi=-self.phi_sum_2)* \
+                                   rhoInitial* \
+                                   self.U_rot(pi/2*self.sq_factor,ion_index=[1,0],phi=-self.phi_sum_1).dag() *\
+                                   self.U_rot(pi/2*self.sq_factor,ion_index=[0,1],phi=-self.phi_sum_2).dag()
+            rho_before_MS_interaction = rho_after_piB2
         else:
             rho_before_MS_interaction = rhoInitial
         # do gate
@@ -185,9 +194,9 @@ class Ms_simulation(Tqg_simulation):
                 else:
                     rho_after_pi = rho_t
                 if self.do_Walsh:
-                    phi = pi+self.second_loop_phase_error#delta_g*times[ii]+pi
+                    phi = pi+self.second_loop_phase_error+self.delta_LS*times[-1]#delta_g*times[ii]+pi
                 else:
-                    phi = 0+self.second_loop_phase_error
+                    phi = 0+self.second_loop_phase_error+self.delta_LS*times[-1]
                 after_second_loop = self.ms_force_asym(rho_after_pi, [0,times[ii]], phi_offset=phi, scnd_loop=True)
                 #after_second_loop = self.ms_force(rho_after_pi, [0,times[ii]], phi_offset=phi)
                 if self.phase_insensitive:
@@ -202,6 +211,13 @@ class Ms_simulation(Tqg_simulation):
                                             self.U_rot(pi/2*self.sq_factor,ion_index=[1,0],phi=self.mw_offset_phase_1).dag() *\
                                             self.U_rot(pi/2*self.sq_factor,ion_index=[0,1],phi=self.mw_offset_phase_2).dag()
                     final_rho = rho_after_2nd_uw_piB2
+                elif self.ms_ls_exp:
+                    rho_after_2nd_piB2 = self.U_rot(pi/2*self.sq_factor,ion_index=[1,0],phi=-self.phi_sum_1)* \
+                                   self.U_rot(pi/2*self.sq_factor,ion_index=[0,1],phi=-self.phi_sum_2)* \
+                                   after_second_loop.states[-1]* \
+                                   self.U_rot(pi/2*self.sq_factor,ion_index=[1,0],phi=-self.phi_sum_1).dag() *\
+                                   self.U_rot(pi/2*self.sq_factor,ion_index=[0,1],phi=-self.phi_sum_2).dag()
+                    final_rho = rho_after_2nd_piB2
                 else:
                     final_rho = after_second_loop.states[-1]
             else: # only one loop
@@ -218,6 +234,13 @@ class Ms_simulation(Tqg_simulation):
                                             self.U_rot(pi/2*self.sq_factor,ion_index=[1,0],phi=self.mw_offset_phase_1).dag() *\
                                             self.U_rot(pi/2*self.sq_factor,ion_index=[0,1],phi=self.mw_offset_phase_2).dag()
                     final_rho = rho_after_2nd_uw_piB2
+                elif self.ms_ls_exp:
+                    rho_after_2nd_piB2 = self.U_rot(pi/2*self.sq_factor,ion_index=[1,0],phi=-self.phi_sum_1+pi/2)* \
+                                   self.U_rot(pi/2*self.sq_factor,ion_index=[0,1],phi=-self.phi_sum_2+pi/2)* \
+                                   rho_t* \
+                                   self.U_rot(pi/2*self.sq_factor,ion_index=[1,0],phi=-self.phi_sum_1+pi/2).dag() *\
+                                   self.U_rot(pi/2*self.sq_factor,ion_index=[0,1],phi=-self.phi_sum_2+pi/2).dag()
+                    final_rho = rho_after_2nd_piB2
                 else:
                     final_rho = rho_t
             # final results
@@ -241,15 +264,33 @@ class Ms_simulation(Tqg_simulation):
         self.set_custom_parameters(**kwargs)
         
         errors = []
-        rho_target = 1/2*(self.uu_uu+self.dd_dd-1j*self.ud_ud+1j*self.du_du)
         ampl_asyms = np.linspace(ampl_asym_min, ampl_asym_max, n_steps)
 
         for ampl_asym in ampl_asyms:
             self.set_ampl_asym(ampl_asym)
             times, final_rhos = self.do_gate()
-            errors.append(1-fidelity(rho_target,ptrace(final_rhos[-1],[0,1]))**2)
+            errors.append(1-fidelity(self.rho_target,ptrace(final_rhos[-1],[0,1]))**2)
             
         return ampl_asyms, errors
+    
+    def scan_LS(self,LS_max=-0.1,LS_min=0.1,n_steps=10,**kwargs):
+        # simulate gate fidelity for amplitude asymmetries
+        # initialize result vectors
+        self.set_custom_parameters(**kwargs)
+        
+        errors = []
+        pops = []
+        
+        LS_vec = np.linspace(LS_min, LS_max, n_steps)
+
+        for LS in LS_vec:
+            self.set_delta_LS(LS)
+            times, final_rhos = self.do_gate()
+            errors.append(1-fidelity(self.rho_target,ptrace(final_rhos[-1],[0,1]))**2)
+            pops.append(ptrace(final_rhos[-1],[0,1])[0,0]+ptrace(final_rhos[-1],[0,1])[3,3])
+            
+        return LS_vec, errors, pops
+    
         
         
     def calc_ideal_Rabi_freq(self,verbose=True):
