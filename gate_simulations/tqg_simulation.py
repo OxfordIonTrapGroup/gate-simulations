@@ -22,7 +22,7 @@ class Tqg_simulation():
                  Delta_ca=-2*pi*10e12,Delta_sr=2*pi*30e12,Omega_R_2=2*pi*80e3,
                  phase_insensitive=False,sq_factor=1.0,qudpl_and_raman=False,
                  on_radial_modes=False,nbars = [0.1,0.1,5,5,5,5],
-                 mode_freqs=None):  
+                 mode_freqs=None,ms_ls_exp=False):  
         ''' nHO: dimension of HO space which is simulated
         nbar_mode: mean thermal population of motional mode
         delta_g: gate detuning
@@ -77,6 +77,7 @@ class Tqg_simulation():
         self.ampl_asym_2 = 0 # amplitude asymmetry in sidebands of second species laser
         self.species_Rabi_asym_MS = 0 # Rabi frequency asymmetry btw the two species, for MS gate
         self.phase_insensitive = phase_insensitive # surround gate pulse with pi/2 pulses so that can use analysis pulse that is not phase-stabilised to gate
+        self.ms_ls_exp = ms_ls_exp
         self.sq_factor = sq_factor
         self.qudpl_and_raman = qudpl_and_raman
         self.on_radial_modes = on_radial_modes
@@ -223,6 +224,9 @@ class Tqg_simulation():
         self.omega_z = self.modes.modes[mode_name].freq
         self.eta_1 = abs(self.modes.modes[mode_name].eta)
         self.eta_2 = abs(self.modes.modes[mode_name].eta_2)
+        print('omega_z: ',self.omega_z)
+        print(self.eta_1)
+        print(self.eta_2)
         
         
     def return_omega_mode(self):
@@ -377,7 +381,7 @@ class Tqg_simulation():
             end_populations_updn.append(expect(self.spin_updn,final_rhos[ii]))
             end_populations_dnup.append(expect(self.spin_dnup,final_rhos[ii]))
             
-            rho_target = 1/2*(self.uu_uu+self.dd_dd-1j*self.ud_ud+1j*self.du_du)
+            rho_target = 1/2*(self.uu_uu+self.dd_dd+1j*self.ud_ud-1j*self.du_du)
             fidelities.append(fidelity(rho_target,ptrace(final_rhos[ii],[0,1]))**2)
             
         return times, end_populations_upup, end_populations_dndn, end_populations_updn, end_populations_dnup, fidelities
@@ -428,7 +432,7 @@ class Tqg_simulation():
         end_populations_dndn = []
         end_populations_upup = []
         end_populations_updn_dnup = []
-        #fidelities = []
+        fidelities = []
         times, final_rhos = self.do_gate(nT=2)
         
         for phi in analysis_phase:
@@ -466,9 +470,9 @@ class Tqg_simulation():
             end_populations_upup.append(expect(self.spin_upup,final_rho))
             end_populations_dndn.append(expect(self.spin_dndn,final_rho))
             end_populations_updn_dnup.append(expect(self.spin_updn_dnup,final_rho))
-#            rho_target = 1/2*(self.uu_uu+self.dd_dd-1j*self.ud_ud+1j*self.du_du)
-#            fidelities.append(fidelity(rho_target,ptrace(final_rhos[-1],[0,1]))**2)
-        return end_populations_upup, end_populations_dndn, end_populations_updn_dnup#, fidelities
+        rho_target = 1/2*(self.uu_uu+self.dd_dd-1j*self.ud_ud+1j*self.du_du)
+        fidelities.append(fidelity(rho_target,ptrace(final_rhos[-1],[0,1]))**2)
+        return end_populations_upup, end_populations_dndn, end_populations_updn_dnup, fidelities
     
         
     def scan_heating_rate(self,ndot_max=1e4,n_steps=10,**kwargs):
